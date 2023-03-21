@@ -5,8 +5,8 @@
 namespace inter
 {
 
-    static const char MutexName[] = {"INTER::COPY_FILE::MUTEX"};
-    static const char BufferName[] = {"INTER::COPY_FILE::BUFFER"};
+    static const char MutexName[] = {"COPY_FILE::INTER::MUTEX"};
+    static const char BufferName[] = {"COPY_FILE::INTER::BUFFER"};
 
 } // namespace inter
 
