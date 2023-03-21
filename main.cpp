@@ -3,6 +3,9 @@
 
 #include <boost/program_options.hpp>
 
+#include <consumer.hpp>
+#include <producer.hpp>
+
 int main(int argc, const char *argv[])
 {
     std::string in_filepath{};
@@ -67,6 +70,22 @@ int main(int argc, const char *argv[])
     if (std::filesystem::exists(in_filepath) == false)
     {
         std::cerr << "This read file does not exist!\n";
+        return EXIT_FAILURE;
+    }
+
+    if (type == "producer")
+    {
+        inter::producer Instance(in_filepath);
+        Instance.run();
+    }
+    else if (type == "consumer")
+    {
+        inter::consumer Instance(out_filepath);
+        Instance.run();
+    }
+    else
+    {
+        std::cerr << "Unknown type: " << type << "!\n";
         return EXIT_FAILURE;
     }
 
