@@ -21,5 +21,5 @@ if (MSVC)
 else()
 endif()
 
-target_include_directories(file-copy-shared-memory PRIVATE include ${Boost_INCLUDE_DIR})
+target_include_directories(file-copy-shared-memory PRIVATE include)
 target_link_libraries(file-copy-shared-memory PRIVATE Boost::program_options)
