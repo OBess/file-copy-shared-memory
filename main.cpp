@@ -82,7 +82,7 @@ int main(int argc, const char *argv[])
         }
         catch (const std::exception &e)
         {
-            std::cerr << "Exception [producer]: " << e.what() << "!\n";
+            std::cerr << "[Producer] Exception: " << e.what() << "!\n";
         }
     }
     else if (type == "consumer")
@@ -94,7 +94,7 @@ int main(int argc, const char *argv[])
         }
         catch (const std::exception &e)
         {
-            std::cerr << "Exception [consumer]: " << e.what() << "!\n";
+            std::cerr << "[Consumer] Exception: " << e.what() << "!\n";
         }
     }
     else
