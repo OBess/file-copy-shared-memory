@@ -36,6 +36,8 @@ namespace inter
             shm::remove();
         }
 
+        /// @brief Gets pointers from shared memroy and runs function that reads
+        ///        data form file and save it to shared memory
         inline void run()
         {
             if (!_inFile)
@@ -61,6 +63,7 @@ namespace inter
         }
 
     private:
+        /// @brief Reads data from file and saves to shared memory
         inline void readFromFile()
         {
             _status->startProducing = true;

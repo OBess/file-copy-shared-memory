@@ -27,6 +27,8 @@ namespace inter
         {
         }
 
+        /// @brief Gets pointers from shared memroy and runs function that
+        ///        writes data form shared memory to file
         inline void run()
         {
             if (!_outFile)
@@ -51,6 +53,7 @@ namespace inter
         }
 
     private:
+        /// @brief Reads data from shared memory and saves to file
         inline void writeToFile()
         {
             my::log::consumer_logger()->info("[Consumer] Start processing...");
