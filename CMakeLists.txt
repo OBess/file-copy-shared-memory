@@ -25,3 +25,5 @@ endif()
 
 target_include_directories(file-copy-shared-memory PRIVATE include)
 target_link_libraries(file-copy-shared-memory PRIVATE Boost::program_options spdlog::spdlog_header_only)
+
+file(COPY ${CMAKE_SOURCE_DIR}/run.bat DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE})
