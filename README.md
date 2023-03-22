@@ -32,7 +32,7 @@ or
 file-copy-shared-memory.exe --in="target" --out="source" --type="consumer"
 ```
 
-Or, you can execute "run.bat" in deploy but redefine you pathes
+Or, you can execute "run.bat" in deploy folder, but redefine you pathes
 
 Also, there is a command "help", that you can get running this like
 ```
