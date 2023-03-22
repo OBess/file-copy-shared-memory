@@ -30,33 +30,30 @@ namespace inter
         {
             if (!_outFile)
             {
-                my::log::logger()->error("[Consumer] Cannot run copping because output filepath is invalid!");
+                my::log::consumer_logger()->error("[Consumer] Cannot run copping because output filepath is invalid!");
                 return;
             }
 
-            _startProducer = shm::getStartProducer();
+            _status = shm::getStatus();
 
-            _endConsumer = shm::getEndConsumer();
-
-            while (*_startProducer == false)
+            my::log::consumer_logger()->info("[Consumer] Waiting for staring producer process...");
+            while (_status->startProducing == false)
             {
-                my::log::logger()->info("[Consumer] Waiting for staring producer process...");
             }
 
             _remainedSymbols = shm::getRemainedSymbols();
-
             _bufferQueue = shm::getBuffer();
 
             writeToFile();
 
-            my::log::logger()->info("[Consumer] Consuming done!");
+            my::log::consumer_logger()->info("[Consumer] Consuming done!");
         }
 
     private:
         inline void writeToFile()
         {
-            my::log::logger()->flush();
-            my::log::logger()->info("[Consumer] Start processing...");
+            my::log::consumer_logger()->info("[Consumer] Start processing...");
+            my::log::consumer_logger()->flush();
 
             while (*_remainedSymbols > 0)
             {
@@ -71,7 +68,7 @@ namespace inter
                 }
             }
 
-            *_endConsumer = true;
+            _status->endConsuming = true;
         }
 
     private:
@@ -82,11 +79,9 @@ namespace inter
         buffer *_bufferQueue{nullptr};
         static constexpr uint32_t _sizeOfBufferQueue{100};
 
-        bool *_startProducer{nullptr};
-        bool *_endConsumer{nullptr};
+        status *_status{nullptr};
 
         bi::named_mutex _mtx{bi::open_or_create, shm::MutexName};
-        bi::named_condition _condVar{bi::open_or_create, shm::CondVarName};
     };
 
 } // namespace inter

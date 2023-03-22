@@ -39,33 +39,33 @@ namespace inter
         {
             if (!_inFile)
             {
-                my::log::logger()->error("[Producer] Cannot run copping because input filepath is invalid!");
+                my::log::producer_logger()->error("[Producer] Cannot run copping because input filepath is invalid!");
                 return;
             }
 
-            _startProducer = shm::getStartProducer();
+            _status = shm::setStatus();
 
-            _endConsumer = shm::getEndConsumer();
+            {
+                std::size_t value = *_remainedSymbols;
 
-            std::size_t value = *_remainedSymbols;
-
-            delete _remainedSymbols;
-            _remainedSymbols = shm::setRemainedSymbols(value);
+                delete _remainedSymbols;
+                _remainedSymbols = shm::setRemainedSymbols(value);
+            }
 
             _bufferQueue = shm::setBuffer();
 
             readFromFile();
 
-            my::log::logger()->info("[Producer] Producing done!");
+            my::log::producer_logger()->info("[Producer] Producing done!");
         }
 
     private:
         inline void readFromFile()
         {
-            *_startProducer = true;
+            _status->startProducing = true;
 
-            my::log::logger()->flush();
-            my::log::logger()->info("[Producer] Start processing...");
+            my::log::producer_logger()->info("[Producer] Start processing...");
+            my::log::producer_logger()->flush();
 
             while (_inFile)
             {
@@ -78,9 +78,9 @@ namespace inter
                 }
             }
 
-            while (*_endConsumer == false)
+            my::log::producer_logger()->info("[Producer] Waiting for ending consumer process...");
+            while (_status->endConsuming == false)
             {
-                my::log::logger()->info("[Producer] Waiting for ending consumer process...");
             }
         }
 
@@ -92,11 +92,9 @@ namespace inter
         buffer *_bufferQueue{nullptr};
         static constexpr uint32_t _sizeOfBufferQueue{100};
 
-        bool *_startProducer{nullptr};
-        bool *_endConsumer{nullptr};
+        status *_status{nullptr};
 
         bi::named_mutex _mtx{bi::open_or_create, shm::MutexName};
-        bi::named_condition _condVar{bi::open_or_create, shm::CondVarName};
     };
 
 } // namespace inter
