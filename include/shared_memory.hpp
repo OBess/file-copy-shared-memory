@@ -3,7 +3,6 @@
 #define __INCLUDE_SHARED_MEMORY_HPP__
 
 #include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 
 #include "buffer.hpp"
@@ -16,52 +15,29 @@ namespace shm
     static const char MutexName[] = {"COPY_FILE_MUTEX"};
     static const char BufferName[] = {"COPY_FILE_BUFFER"};
     static const char RemainedSymbolsName[] = {"COPY_FILE_REMAINED_SYMBOLS"};
-    static const char CondVarName[] = {"COPY_FILE_COND_VAR"};
-    static const char StartProducerName[] = {"COPY_FILE_START_PRODUCER"};
-    static const char EndConsumerName[] = {"COPY_FILE_END_CONSUMER"};
+    static const char StatusName[] = {"COPY_FILE_STATUS"};
 
     static inline void remove()
     {
-        bi::shared_memory_object::remove(RemainedSymbolsName);
         bi::shared_memory_object::remove(BufferName);
-        bi::shared_memory_object::remove(StartProducerName);
-        bi::shared_memory_object::remove(EndConsumerName);
+        bi::shared_memory_object::remove(RemainedSymbolsName);
         bi::named_mutex::remove(MutexName);
-        bi::named_condition::remove(CondVarName);
+        bi::shared_memory_object::remove(StatusName);
     }
 
     // --- GETTERS ---
 
-    static inline bool *getStartProducer()
+    static inline inter::status *getStatus()
     {
-        static bi::shared_memory_object sharedMemmory{bi::open_or_create,
-                                                      shm::StartProducerName,
+        static bi::shared_memory_object sharedMemmory{bi::open_only,
+                                                      shm::StatusName,
                                                       bi::read_write};
 
         sharedMemmory.truncate(sizeof(bool));
 
         static bi::mapped_region region(sharedMemmory, bi::read_write);
 
-        auto ptr = static_cast<bool *>(region.get_address());
-        *ptr = false;
-
-        return ptr;
-    }
-
-    static inline bool *getEndConsumer()
-    {
-        static bi::shared_memory_object sharedMemmory{bi::open_or_create,
-                                                      shm::EndConsumerName,
-                                                      bi::read_write};
-
-        sharedMemmory.truncate(sizeof(bool));
-
-        static bi::mapped_region region(sharedMemmory, bi::read_write);
-
-        auto ptr = static_cast<bool *>(region.get_address());
-        *ptr = false;
-
-        return ptr;
+        return static_cast<inter::status *>(region.get_address());
     }
 
     static inline std::size_t *getRemainedSymbols()
@@ -87,6 +63,23 @@ namespace shm
     }
 
     // --- SETTERS ---
+    static inline inter::status *setStatus()
+    {
+        static bi::shared_memory_object sharedMemmory{bi::open_or_create,
+                                                      shm::StatusName,
+                                                      bi::read_write};
+
+        sharedMemmory.truncate(sizeof(bool));
+
+        static bi::mapped_region region(sharedMemmory, bi::read_write);
+
+        auto ptr = static_cast<inter::status *>(region.get_address());
+
+        ptr->startProducing = false;
+        ptr->endConsuming = false;
+
+        return ptr;
+    }
 
     static inline std::size_t *setRemainedSymbols(std::size_t value)
     {
