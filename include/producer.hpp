@@ -36,7 +36,7 @@ namespace inter
             shm::remove();
         }
 
-        /// @brief Gets pointers from shared memroy and runs function that reads
+        /// @brief Gets pointers from shared memory and runs function that reads
         ///        data form file and save it to shared memory
         inline void run()
         {

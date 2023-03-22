@@ -27,7 +27,7 @@ namespace inter
         {
         }
 
-        /// @brief Gets pointers from shared memroy and runs function that
+        /// @brief Gets pointers from shared memory and runs function that
         ///        writes data form shared memory to file
         inline void run()
         {
