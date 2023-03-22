@@ -75,13 +75,27 @@ int main(int argc, const char *argv[])
 
     if (type == "producer")
     {
-        inter::producer Instance(in_filepath);
-        Instance.run();
+        try
+        {
+            inter::producer Instance(in_filepath);
+            Instance.run();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Exception [producer]: " << e.what() << "!\n";
+        }
     }
     else if (type == "consumer")
     {
-        inter::consumer Instance(out_filepath);
-        Instance.run();
+        try
+        {
+            inter::consumer Instance(out_filepath);
+            Instance.run();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Exception [consumer]: " << e.what() << "!\n";
+        }
     }
     else
     {
