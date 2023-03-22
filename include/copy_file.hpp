@@ -53,12 +53,10 @@ namespace inter
 
             if (isProducer)
             {
-                std::cout << "Producer" << std::endl;
                 producer();
             }
             else
             {
-                std::cout << "Consumer" << std::endl;
                 consumer();
             }
         }
