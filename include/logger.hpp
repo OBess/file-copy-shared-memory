@@ -6,10 +6,21 @@
 
 namespace my::log
 {
-
-    static inline auto logger()
+    static inline auto deflogger()
     {
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/logs.txt"));
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/deflogs.txt"));
+        return instance;
+    }
+
+    static inline auto producer_logger()
+    {
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/producer_logs.txt"));
+        return instance;
+    }
+
+    static inline auto consumer_logger()
+    {
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/consumer_logs.txt"));
         return instance;
     }
 

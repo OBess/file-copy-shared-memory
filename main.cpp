@@ -48,29 +48,29 @@ int main(int argc, const char *argv[])
     }
     catch (const std::exception &e)
     {
-        my::log::logger()->error("Params exception: {}", e.what());
+        my::log::deflogger()->error("Params exception: {}", e.what());
         return EXIT_FAILURE;
     }
 
     if (in_filepath.empty())
     {
-        my::log::logger()->error("There is no file to read!");
+        my::log::deflogger()->error("There is no file to read!");
         return EXIT_FAILURE;
     }
     else if (out_filepath.empty())
     {
-        my::log::logger()->error("There is no file to write!");
+        my::log::deflogger()->error("There is no file to write!");
         return EXIT_FAILURE;
     }
     else if (type.empty())
     {
-        my::log::logger()->error("There is no type of process!");
+        my::log::deflogger()->error("There is no type of process!");
         return EXIT_FAILURE;
     }
 
     if (std::filesystem::exists(in_filepath) == false)
     {
-        my::log::logger()->error("This read file does not exist!");
+        my::log::deflogger()->error("This read file does not exist!");
         return EXIT_FAILURE;
     }
 
@@ -83,7 +83,7 @@ int main(int argc, const char *argv[])
         }
         catch (const std::exception &e)
         {
-            my::log::logger()->error("[Producer]: {}!", e.what());
+            my::log::deflogger()->error("[Producer]: {}!", e.what());
         }
     }
     else if (type == "consumer")
@@ -95,12 +95,12 @@ int main(int argc, const char *argv[])
         }
         catch (const std::exception &e)
         {
-            my::log::logger()->error("[Consumer]: {}!", e.what());
+            my::log::deflogger()->error("[Consumer]: {}!", e.what());
         }
     }
     else
     {
-        my::log::logger()->error("Unknown type: {}!", type);
+        my::log::deflogger()->error("Unknown type: {}!", type);
         return EXIT_FAILURE;
     }
 
