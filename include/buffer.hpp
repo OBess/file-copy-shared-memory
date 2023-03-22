@@ -16,6 +16,12 @@ namespace inter
         std::size_t readSize{};
     };
 
+    struct status
+    {
+        bool startProducing{false};
+        bool endConsuming{false};
+    };
+
 } // namespace detail
 
 #endif // __INCLUDE_BUFFER_HPP__
