@@ -28,19 +28,21 @@ namespace shm
 
     // --- GETTERS ---
 
+    /// @brief Gets status from shared memory
+    /// @return Ponter to status
     static inline inter::status *getStatus()
     {
         static bi::shared_memory_object sharedMemmory{bi::open_only,
                                                       shm::StatusName,
                                                       bi::read_write};
 
-        sharedMemmory.truncate(sizeof(bool));
-
         static bi::mapped_region region(sharedMemmory, bi::read_write);
 
         return static_cast<inter::status *>(region.get_address());
     }
 
+    /// @brief Gets remained symbols from shared memory
+    /// @return Pointer to remained symbols
     static inline std::size_t *getRemainedSymbols()
     {
         static bi::shared_memory_object sharedMemmory{bi::open_only,
@@ -52,6 +54,8 @@ namespace shm
         return static_cast<std::size_t *>(region.get_address());
     }
 
+    /// @brief Gets buffer from shared memory
+    /// @return Pointer to buffer
     static inline inter::buffer *getBuffer()
     {
         static bi::shared_memory_object sharedMemmory{bi::open_only,
@@ -64,6 +68,9 @@ namespace shm
     }
 
     // --- SETTERS ---
+
+    /// @brief Sets status to shared memory
+    /// @return Ponter to status
     static inline inter::status *setStatus()
     {
         static bi::shared_memory_object sharedMemmory{bi::open_or_create,
@@ -82,6 +89,9 @@ namespace shm
         return ptr;
     }
 
+    /// @brief Sets remained symbols to shared memory
+    /// @param value
+    /// @return Pointer to remained symbols
     static inline std::size_t *setRemainedSymbols(std::size_t value)
     {
         static bi::shared_memory_object sharedMemmory{bi::create_only,
@@ -95,6 +105,8 @@ namespace shm
         return new (region.get_address()) std::size_t(value);
     }
 
+    /// @brief Sets buffer to shared memory
+    /// @return Pointer to buffer
     static inline inter::buffer *setBuffer()
     {
         static bi::shared_memory_object sharedMemmory{bi::create_only,
