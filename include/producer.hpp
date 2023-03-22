@@ -52,7 +52,7 @@ namespace inter
             delete _remainedSymbols;
             _remainedSymbols = shm::setRemainedSymbols(value);
 
-            _bufferQueue = shm::setBufferQueue();
+            _bufferQueue = shm::setBuffer();
 
             readFromFile();
 

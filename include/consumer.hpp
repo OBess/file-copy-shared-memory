@@ -45,7 +45,7 @@ namespace inter
 
             _remainedSymbols = shm::getRemainedSymbols();
 
-            _bufferQueue = shm::getBufferQueue();
+            _bufferQueue = shm::getBuffer();
 
             writeToFile();
 

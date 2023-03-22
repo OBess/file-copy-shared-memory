@@ -75,7 +75,7 @@ namespace shm
         return static_cast<std::size_t *>(region.get_address());
     }
 
-    static inline inter::buffer *getBufferQueue()
+    static inline inter::buffer *getBuffer()
     {
         static bi::shared_memory_object sharedMemmory{bi::open_only,
                                                       shm::BufferName,
@@ -101,7 +101,7 @@ namespace shm
         return new (region.get_address()) std::size_t(value);
     }
 
-    static inline inter::buffer *setBufferQueue()
+    static inline inter::buffer *setBuffer()
     {
         static bi::shared_memory_object sharedMemmory{bi::create_only,
                                                       shm::BufferName,
