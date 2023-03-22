@@ -13,111 +13,66 @@ namespace shm
 
     namespace bi = boost::interprocess;
 
-    static const char MutexName[] = {"COPY_FILE_MUTEX"};
-    static const char BufferName[] = {"COPY_FILE_BUFFER"};
-    static const char RemainedSymbolsName[] = {"COPY_FILE_REMAINED_SYMBOLS"};
-    static const char StatusName[] = {"COPY_FILE_STATUS"};
-
-    static inline void remove()
+    struct shared_memory
     {
-        bi::shared_memory_object::remove(BufferName);
-        bi::shared_memory_object::remove(RemainedSymbolsName);
-        bi::named_mutex::remove(MutexName);
-        bi::shared_memory_object::remove(StatusName);
+        static constexpr uint32_t statusSize{sizeof(inter::status)};
+        static constexpr uint32_t remainedSymbolsSize{sizeof(std::size_t)};
+        static constexpr uint32_t bufferSize{sizeof(inter::buffer)};
+        static constexpr std::size_t entireSize{statusSize +
+                                                remainedSymbolsSize +
+                                                bufferSize};
+
+        uint8_t *ptr{nullptr};
+    };
+
+    /// @brief Checks, if shared memory with name exists
+    /// @param name name of shared memory
+    /// @return True, if shared memory with name exists, False otherwise
+    inline bool exists(std::string_view name)
+    {
+        try
+        {
+            [[maybe_unused]] const bi::shared_memory_object shm_source(bi::create_only,
+                                                                       name.data(),
+                                                                       bi::read_only);
+            return false;
+        }
+        catch (const std::exception &ex)
+        {
+            return true;
+        }
+
+        return false;
     }
 
-    // --- GETTERS ---
-
-    /// @brief Gets status from shared memory
-    /// @return Ponter to status
-    static inline inter::status *getStatus()
-    {
-        static bi::shared_memory_object sharedMemmory{bi::open_only,
-                                                      shm::StatusName,
-                                                      bi::read_write};
-
-        static bi::mapped_region region(sharedMemmory, bi::read_write);
-
-        return static_cast<inter::status *>(region.get_address());
-    }
-
-    /// @brief Gets remained symbols from shared memory
-    /// @return Pointer to remained symbols
-    static inline std::size_t *getRemainedSymbols()
-    {
-        static bi::shared_memory_object sharedMemmory{bi::open_only,
-                                                      shm::RemainedSymbolsName,
-                                                      bi::read_write};
-
-        static bi::mapped_region region(sharedMemmory, bi::read_write);
-
-        return static_cast<std::size_t *>(region.get_address());
-    }
-
-    /// @brief Gets buffer from shared memory
-    /// @return Pointer to buffer
-    static inline inter::buffer *getBuffer()
-    {
-        static bi::shared_memory_object sharedMemmory{bi::open_only,
-                                                      shm::BufferName,
-                                                      bi::read_write};
-
-        static bi::mapped_region region(sharedMemmory, bi::read_write);
-
-        return static_cast<inter::buffer *>(region.get_address());
-    }
-
-    // --- SETTERS ---
-
-    /// @brief Sets status to shared memory
-    /// @return Ponter to status
-    static inline inter::status *setStatus()
+    /// @brief Opens or creates shared memory and returns poninter to it
+    /// @param name name of shared memory
+    /// @return Pointer to shared memory
+    static inline shared_memory getShareMemory(std::string_view name)
     {
         static bi::shared_memory_object sharedMemmory{bi::open_or_create,
-                                                      shm::StatusName,
+                                                      name.data(),
                                                       bi::read_write};
 
-        sharedMemmory.truncate(sizeof(bool));
+        static constexpr std::size_t shareMemorySize{shared_memory::entireSize};
+
+        if (int64_t currentSize{0}; sharedMemmory.get_size(currentSize))
+        {
+            if (currentSize < shareMemorySize)
+            {
+                sharedMemmory.truncate(shareMemorySize);
+            }
+        }
 
         static bi::mapped_region region(sharedMemmory, bi::read_write);
 
-        auto ptr = static_cast<inter::status *>(region.get_address());
+        if (inter::status *status = reinterpret_cast<inter::status *>(region.get_address());
+            status->startProducing == false)
+        {
+            std::memset(region.get_address(), 0, shareMemorySize);
+        }
 
-        ptr->startProducing = false;
-        ptr->endConsuming = false;
-
-        return ptr;
-    }
-
-    /// @brief Sets remained symbols to shared memory
-    /// @param value
-    /// @return Pointer to remained symbols
-    static inline std::size_t *setRemainedSymbols(std::size_t value)
-    {
-        static bi::shared_memory_object sharedMemmory{bi::create_only,
-                                                      shm::RemainedSymbolsName,
-                                                      bi::read_write};
-
-        sharedMemmory.truncate(sizeof(std::size_t));
-
-        static bi::mapped_region region(sharedMemmory, bi::read_write);
-
-        return new (region.get_address()) std::size_t(value);
-    }
-
-    /// @brief Sets buffer to shared memory
-    /// @return Pointer to buffer
-    static inline inter::buffer *setBuffer()
-    {
-        static bi::shared_memory_object sharedMemmory{bi::create_only,
-                                                      shm::BufferName,
-                                                      bi::read_write};
-
-        sharedMemmory.truncate(sizeof(inter::buffer));
-
-        static bi::mapped_region region(sharedMemmory, bi::read_write);
-
-        return new (region.get_address()) inter::buffer();
+        return {reinterpret_cast<uint8_t *>(region.get_address())};
     }
 
 } // namespace shm

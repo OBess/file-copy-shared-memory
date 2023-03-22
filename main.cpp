@@ -3,15 +3,14 @@
 
 #include <boost/program_options.hpp>
 
-#include <consumer.hpp>
+#include <copy_file.hpp>
 #include <logger.hpp>
-#include <producer.hpp>
 
 int main(int argc, const char *argv[])
 {
     std::string in_filepath{};
     std::string out_filepath{};
-    std::string type{};
+    std::string name{};
 
     try
     {
@@ -24,13 +23,13 @@ int main(int argc, const char *argv[])
             ("help", "produce help message")
             ("in", po::value<std::string>(&in_filepath), "the file to read")
             ("out", po::value<std::string>(&out_filepath), "the file to write")
-            ("type", po::value<std::string>(&type), "the type of process [consumer | producer]");
+            ("name", po::value<std::string>(&name), "the name of shared memory");
         // clang-format on
 
         po::positional_options_description pod;
         pod.add("in", 1);
         pod.add("out", 2);
-        pod.add("type", 3);
+        pod.add("name", 3);
 
         po::variables_map vm;
         po::store(po::command_line_parser(argc, argv)
@@ -62,9 +61,9 @@ int main(int argc, const char *argv[])
         my::log::deflogger()->error("There is no file to write!");
         return EXIT_FAILURE;
     }
-    else if (type.empty())
+    else if (name.empty())
     {
-        my::log::deflogger()->error("There is no type of process!");
+        my::log::deflogger()->error("There is no name of shared memomy!");
         return EXIT_FAILURE;
     }
 
@@ -80,34 +79,14 @@ int main(int argc, const char *argv[])
         return EXIT_FAILURE;
     }
 
-    if (type == "producer")
+    try
     {
-        try
-        {
-            inter::producer Instance(in_filepath);
-            Instance.run();
-        }
-        catch (const std::exception &e)
-        {
-            my::log::deflogger()->error("[Producer]: {}!", e.what());
-        }
+        inter::copy_file Instance(in_filepath, out_filepath, name);
+        Instance.run();
     }
-    else if (type == "consumer")
+    catch (const std::exception &e)
     {
-        try
-        {
-            inter::consumer Instance(out_filepath);
-            Instance.run();
-        }
-        catch (const std::exception &e)
-        {
-            my::log::deflogger()->error("[Consumer]: {}!", e.what());
-        }
-    }
-    else
-    {
-        my::log::deflogger()->error("Unknown type: {}!", type);
-        return EXIT_FAILURE;
+        my::log::deflogger()->error("{}!", e.what());
     }
 
     return EXIT_SUCCESS;
