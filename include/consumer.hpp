@@ -11,8 +11,9 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 
 #include "buffer.hpp"
-#include "shared_memory.hpp"
 #include "logger.hpp"
+#include "status.hpp"
+#include "shared_memory.hpp"
 
 namespace inter
 {

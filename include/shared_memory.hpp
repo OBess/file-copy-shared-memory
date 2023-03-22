@@ -6,6 +6,7 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 
 #include "buffer.hpp"
+#include "status.hpp"
 
 namespace shm
 {
