@@ -74,6 +74,12 @@ int main(int argc, const char *argv[])
         return EXIT_FAILURE;
     }
 
+    if (in_filepath == out_filepath)
+    {
+        my::log::deflogger()->error("The filepathes are same!");
+        return EXIT_FAILURE;
+    }
+
     if (type == "producer")
     {
         try
