@@ -4,8 +4,8 @@
 #include <boost/program_options.hpp>
 
 #include <consumer.hpp>
-#include <producer.hpp>
 #include <logger.hpp>
+#include <producer.hpp>
 
 int main(int argc, const char *argv[])
 {
