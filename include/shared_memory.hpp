@@ -19,7 +19,6 @@ namespace shm
     struct shared_memory
     {
         inter::status status{};
-        bi::interprocess_mutex mutex{};
 
         inter::buffer buffer[2]{};
         bool switcher{false};

@@ -93,18 +93,13 @@ namespace inter
 
             while (inFile)
             {
-                // buffer &curBuf = _sharedMemory->buffer[_sharedMemory->switcher];
                 for (auto &curBuf : _sharedMemory->buffer)
                 {
                     if (curBuf.readSize == 0)
                     {
-                        // bi::scoped_lock lk(_sharedMemory->mutex);
-
                         inFile.read(curBuf.data, curBuf.bufferSize);
 
                         curBuf.readSize = inFile.gcount();
-
-                        // _sharedMemory->switcher = !_sharedMemory->switcher;
                     }
                 }
             }
@@ -140,25 +135,24 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            bool write = true;
+            bool write{true};
             while (write)
             {
-                // buffer &curBuf = _sharedMemory->buffer[!_sharedMemory->switcher];
                 for (auto &curBuf : _sharedMemory->buffer)
                 {
-                    if (curBuf.readSize > 0)
+                    if (curBuf.readSize == 0)
                     {
-                        // bi::scoped_lock lk(_sharedMemory->mutex);
-
-                        outFile.write(curBuf.data, curBuf.readSize);
-
-                        if (curBuf.readSize < buffer::bufferSize)
-                        {
-                            write = false;
-                        }
-
-                        curBuf.readSize = 0;
+                        continue;
                     }
+
+                    outFile.write(curBuf.data, curBuf.readSize);
+
+                    if (curBuf.readSize < buffer::bufferSize)
+                    {
+                        write = false;
+                    }
+
+                    curBuf.readSize = 0;
                 }
             }
 
