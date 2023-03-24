@@ -98,7 +98,7 @@ namespace inter
                 {
                     if (curBuf.readSize == 0)
                     {
-                        bi::scoped_lock lk(_sharedMemory->mutex);
+                        // bi::scoped_lock lk(_sharedMemory->mutex);
 
                         inFile.read(curBuf.data, curBuf.bufferSize);
 
@@ -148,7 +148,7 @@ namespace inter
                 {
                     if (curBuf.readSize > 0)
                     {
-                        bi::scoped_lock lk(_sharedMemory->mutex);
+                        // bi::scoped_lock lk(_sharedMemory->mutex);
 
                         outFile.write(curBuf.data, curBuf.readSize);
 
