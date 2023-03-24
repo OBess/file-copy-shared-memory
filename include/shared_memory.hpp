@@ -46,8 +46,9 @@ namespace shm
 
     /// @brief Opens or creates shared memory and returns poninter to it
     /// @param name name of shared memory
+    /// @param isProducer
     /// @return Pointer to shared memory
-    static inline uint8_t *getShareMemory(std::string_view name)
+    static inline uint8_t *getShareMemory(std::string_view name, bool isProducer)
     {
         static bi::shared_memory_object sharedMemmory{bi::open_or_create,
                                                       name.data(),
@@ -65,8 +66,7 @@ namespace shm
 
         static bi::mapped_region region(sharedMemmory, bi::read_write);
 
-        if (inter::status *status = reinterpret_cast<inter::status *>(region.get_address());
-            status->startProducing == false)
+        if (isProducer)
         {
             std::memset(region.get_address(), 0, shareMemorySize);
         }

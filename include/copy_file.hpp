@@ -41,7 +41,7 @@ namespace inter
             // Checks if current process can be producer
             _isProducer = shm::exists(_sharedName) == false;
 
-            uint8_t *shmPtr = shm::getShareMemory(_sharedName);
+            uint8_t *shmPtr = shm::getShareMemory(_sharedName, _isProducer);
 
             if (_isProducer)
             {
