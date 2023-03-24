@@ -81,8 +81,6 @@ namespace inter
                 return;
             }
 
-            _sharedMemory->remainedSymbols = std::filesystem::file_size(_inFilepath);
-
             readFromFile(inFile);
 
             my::log::producer_logger()->info("[Producer] Producing done!");
@@ -136,7 +134,7 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            while (_sharedMemory->remainedSymbols > 0)
+            while (true)
             {
                 if (_sharedMemory->buffer.readSize > 0)
                 {
@@ -145,8 +143,10 @@ namespace inter
                     outFile.write(_sharedMemory->buffer.data,
                                   _sharedMemory->buffer.readSize);
 
-                    _sharedMemory->remainedSymbols -=
-                        _sharedMemory->buffer.readSize;
+                    if (_sharedMemory->buffer.readSize < buffer::bufferSize)
+                    {
+                        break;
+                    }
 
                     _sharedMemory->buffer.readSize = 0;
                 }

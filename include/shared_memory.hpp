@@ -20,7 +20,6 @@ namespace shm
     {
         inter::status status{};
         inter::buffer buffer{};
-        std::size_t remainedSymbols{};
         bi::interprocess_mutex mutex{};
     };
 
