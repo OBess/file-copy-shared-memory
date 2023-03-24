@@ -19,9 +19,7 @@ namespace shm
     struct shared_memory
     {
         inter::status status{};
-
         inter::buffer buffer[2]{};
-        bool switcher{false};
     };
 
     /// @brief Checks, if shared memory with name exists
