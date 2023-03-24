@@ -93,13 +93,17 @@ namespace inter
 
             while (inFile)
             {
-                if (_sharedMemory->buffer.readSize == 0)
+                buffer &curBuf = _sharedMemory->buffer[_sharedMemory->switcher];
+
+                if (curBuf.readSize == 0)
                 {
                     bi::scoped_lock lk(_sharedMemory->mutex);
 
-                    inFile.read(_sharedMemory->buffer.data, _sharedMemory->buffer.bufferSize);
+                    inFile.read(curBuf.data, curBuf.bufferSize);
 
-                    _sharedMemory->buffer.readSize = inFile.gcount();
+                    curBuf.readSize = inFile.gcount();
+
+                    _sharedMemory->switcher = !_sharedMemory->switcher;
                 }
             }
 
@@ -136,19 +140,20 @@ namespace inter
         {
             while (true)
             {
-                if (_sharedMemory->buffer.readSize > 0)
+                buffer &curBuf = _sharedMemory->buffer[!_sharedMemory->switcher];
+
+                if (curBuf.readSize > 0)
                 {
                     bi::scoped_lock lk(_sharedMemory->mutex);
 
-                    outFile.write(_sharedMemory->buffer.data,
-                                  _sharedMemory->buffer.readSize);
+                    outFile.write(curBuf.data, curBuf.readSize);
 
-                    if (_sharedMemory->buffer.readSize < buffer::bufferSize)
+                    if (curBuf.readSize < buffer::bufferSize)
                     {
                         break;
                     }
 
-                    _sharedMemory->buffer.readSize = 0;
+                    curBuf.readSize = 0;
                 }
             }
 
