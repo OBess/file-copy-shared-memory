@@ -93,19 +93,17 @@ namespace inter
 
             while (inFile)
             {
-                // buffer &curBuf = _sharedMemory->buffer[_sharedMemory->switcher];
-                for (auto &curBuf : _sharedMemory->buffer)
+                buffer &curBuf = _sharedMemory->buffer[_sharedMemory->switcher];
+
+                if (curBuf.readSize == 0)
                 {
-                    if (curBuf.readSize == 0)
-                    {
-                        bi::scoped_lock lk(_sharedMemory->mutex);
+                    bi::scoped_lock lk(_sharedMemory->mutex);
 
-                        inFile.read(curBuf.data, curBuf.bufferSize);
+                    inFile.read(curBuf.data, curBuf.bufferSize);
 
-                        curBuf.readSize = inFile.gcount();
+                    curBuf.readSize = inFile.gcount();
 
-                        // _sharedMemory->switcher = !_sharedMemory->switcher;
-                    }
+                    _sharedMemory->switcher = !_sharedMemory->switcher;
                 }
             }
 
@@ -140,25 +138,22 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            bool write = true;
-            while (write)
+            while (true)
             {
-                // buffer &curBuf = _sharedMemory->buffer[!_sharedMemory->switcher];
-                for (auto &curBuf : _sharedMemory->buffer)
+                buffer &curBuf = _sharedMemory->buffer[!_sharedMemory->switcher];
+
+                if (curBuf.readSize > 0)
                 {
-                    if (curBuf.readSize > 0)
+                    bi::scoped_lock lk(_sharedMemory->mutex);
+
+                    outFile.write(curBuf.data, curBuf.readSize);
+
+                    if (curBuf.readSize < buffer::bufferSize)
                     {
-                        bi::scoped_lock lk(_sharedMemory->mutex);
-
-                        outFile.write(curBuf.data, curBuf.readSize);
-
-                        if (curBuf.readSize < buffer::bufferSize)
-                        {
-                            write = false;
-                        }
-
-                        curBuf.readSize = 0;
+                        break;
                     }
+
+                    curBuf.readSize = 0;
                 }
             }
 
