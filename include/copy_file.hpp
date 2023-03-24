@@ -81,7 +81,14 @@ namespace inter
                 return;
             }
 
+            _sharedMemory->status.startProducing = true;
+
             readFromFile(inFile);
+
+            while (_sharedMemory->status.endConsuming == false)
+            {
+                // Waiting for ending consumer process...
+            }
 
             my::log::producer_logger()->info("[Producer] Producing done!");
         }
@@ -89,8 +96,6 @@ namespace inter
         /// @brief Reads data from file and saves to shared memory
         inline void readFromFile(std::ifstream &inFile)
         {
-            _sharedMemory->status.startProducing = true;
-
             while (inFile)
             {
                 for (auto &curBuf : _sharedMemory->buffer)
@@ -102,11 +107,6 @@ namespace inter
                         curBuf.readSize = inFile.gcount();
                     }
                 }
-            }
-
-            while (_sharedMemory->status.endConsuming == false)
-            {
-                // Waiting for ending consumer process...
             }
         }
 
@@ -127,7 +127,13 @@ namespace inter
                 // Waiting for staring producer process...
             }
 
-            writeToFile(outFile);
+            if (std::size_t fileSize{std::filesystem::file_size(_inFilepath)};
+                fileSize > 0)
+            {
+                writeToFile(outFile);
+            }
+
+            _sharedMemory->status.endConsuming = true;
 
             my::log::consumer_logger()->info("[Consumer] Consuming done!");
         }
@@ -155,8 +161,6 @@ namespace inter
                     curBuf.readSize = 0;
                 }
             }
-
-            _sharedMemory->status.endConsuming = true;
         }
 
     private:
