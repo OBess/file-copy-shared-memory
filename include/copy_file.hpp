@@ -41,7 +41,7 @@ namespace inter
             // Checks if current process can be producer
             _isProducer = shm::exists(_sharedName) == false;
 
-            uint8_t *shmPtr = shm::getShareMemory(_sharedName);
+            uint8_t *shmPtr = shm::getShareMemory(_sharedName, _isProducer);
 
             if (_isProducer)
             {
@@ -81,7 +81,14 @@ namespace inter
                 return;
             }
 
+            _sharedMemory->status.startProducing = true;
+
             readFromFile(inFile);
+
+            while (_sharedMemory->status.endConsuming == false)
+            {
+                // Waiting for ending consumer process...
+            }
 
             my::log::producer_logger()->info("[Producer] Producing done!");
         }
@@ -89,23 +96,17 @@ namespace inter
         /// @brief Reads data from file and saves to shared memory
         inline void readFromFile(std::ifstream &inFile)
         {
-            _sharedMemory->status.startProducing = true;
-
             while (inFile)
             {
-                if (_sharedMemory->buffer.readSize == 0)
+                for (auto &curBuf : _sharedMemory->buffer)
                 {
-                    bi::scoped_lock lk(_sharedMemory->mutex);
+                    if (curBuf.readSize == 0)
+                    {
+                        inFile.read(curBuf.data, curBuf.bufferSize);
 
-                    inFile.read(_sharedMemory->buffer.data, _sharedMemory->buffer.bufferSize);
-
-                    _sharedMemory->buffer.readSize = inFile.gcount();
+                        curBuf.readSize = inFile.gcount();
+                    }
                 }
-            }
-
-            while (_sharedMemory->status.endConsuming == false)
-            {
-                // Waiting for ending consumer process...
             }
         }
 
@@ -126,7 +127,13 @@ namespace inter
                 // Waiting for staring producer process...
             }
 
-            writeToFile(outFile);
+            if (std::size_t fileSize{std::filesystem::file_size(_inFilepath)};
+                fileSize > 0)
+            {
+                writeToFile(outFile);
+            }
+
+            _sharedMemory->status.endConsuming = true;
 
             my::log::consumer_logger()->info("[Consumer] Consuming done!");
         }
@@ -134,25 +141,26 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            while (true)
+            bool write{true};
+            while (write)
             {
-                if (_sharedMemory->buffer.readSize > 0)
+                for (auto &curBuf : _sharedMemory->buffer)
                 {
-                    bi::scoped_lock lk(_sharedMemory->mutex);
-
-                    outFile.write(_sharedMemory->buffer.data,
-                                  _sharedMemory->buffer.readSize);
-
-                    if (_sharedMemory->buffer.readSize < buffer::bufferSize)
+                    if (curBuf.readSize == 0)
                     {
-                        break;
+                        continue;
                     }
 
-                    _sharedMemory->buffer.readSize = 0;
+                    outFile.write(curBuf.data, curBuf.readSize);
+
+                    if (curBuf.readSize < buffer::bufferSize)
+                    {
+                        write = false;
+                    }
+
+                    curBuf.readSize = 0;
                 }
             }
-
-            _sharedMemory->status.endConsuming = true;
         }
 
     private:
