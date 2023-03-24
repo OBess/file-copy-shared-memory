@@ -2,8 +2,11 @@
 #ifndef __INCLUDE_SHARED_MEMORY_HPP__
 #define __INCLUDE_SHARED_MEMORY_HPP__
 
+#include <mutex>
+
 #include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/sync/named_mutex.hpp>
+#include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include "buffer.hpp"
 #include "status.hpp"
@@ -15,14 +18,10 @@ namespace shm
 
     struct shared_memory
     {
-        static constexpr uint32_t statusSize{sizeof(inter::status)};
-        static constexpr uint32_t remainedSymbolsSize{sizeof(std::size_t)};
-        static constexpr uint32_t bufferSize{sizeof(inter::buffer)};
-        static constexpr std::size_t entireSize{statusSize +
-                                                remainedSymbolsSize +
-                                                bufferSize};
-
-        uint8_t *ptr{nullptr};
+        inter::status status{};
+        inter::buffer buffer{};
+        std::size_t remainedSymbols{};
+        bi::interprocess_mutex mutex{};
     };
 
     /// @brief Checks, if shared memory with name exists
@@ -48,13 +47,13 @@ namespace shm
     /// @brief Opens or creates shared memory and returns poninter to it
     /// @param name name of shared memory
     /// @return Pointer to shared memory
-    static inline shared_memory getShareMemory(std::string_view name)
+    static inline uint8_t *getShareMemory(std::string_view name)
     {
         static bi::shared_memory_object sharedMemmory{bi::open_or_create,
                                                       name.data(),
                                                       bi::read_write};
 
-        static constexpr std::size_t shareMemorySize{shared_memory::entireSize};
+        static constexpr std::size_t shareMemorySize{sizeof(shared_memory)};
 
         if (int64_t currentSize{0}; sharedMemmory.get_size(currentSize))
         {
@@ -72,7 +71,7 @@ namespace shm
             std::memset(region.get_address(), 0, shareMemorySize);
         }
 
-        return {reinterpret_cast<uint8_t *>(region.get_address())};
+        return reinterpret_cast<uint8_t *>(region.get_address());
     }
 
 } // namespace shm

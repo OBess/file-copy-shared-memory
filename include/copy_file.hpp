@@ -6,8 +6,6 @@
 #include <iostream>
 
 #include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
-#include <boost/interprocess/sync/named_mutex.hpp>
 
 #include "buffer.hpp"
 #include "logger.hpp"
@@ -30,8 +28,10 @@ namespace inter
 
         ~copy_file()
         {
-            bi::named_mutex::remove(_mutexName.data());
-            bi::shared_memory_object::remove(_sharedName.data());
+            if (_isProducer)
+            {
+                free_shared_memory();
+            }
         }
 
         /// @brief Gets pointers from shared memory and runs function that read-write
@@ -39,29 +39,36 @@ namespace inter
         inline void run()
         {
             // Checks if current process can be producer
-            const bool isProducer = shm::exists(_sharedName) == false;
+            _isProducer = shm::exists(_sharedName) == false;
 
-            _sharedMemory = shm::getShareMemory(_sharedName);
+            uint8_t *shmPtr = shm::getShareMemory(_sharedName);
 
-            _status = reinterpret_cast<status *>(_sharedMemory.ptr);
-            _remainedSymbols =
-                reinterpret_cast<std::size_t *>(_sharedMemory.ptr +
-                                                _sharedMemory.statusSize);
-            _buffer = reinterpret_cast<buffer *>(_sharedMemory.ptr +
-                                                 (_sharedMemory.entireSize -
-                                                  _sharedMemory.bufferSize));
-
-            if (isProducer)
+            if (_isProducer)
             {
+                _sharedMemory = new (shmPtr) shm::shared_memory;
+
                 producer();
             }
             else
             {
+                _sharedMemory = reinterpret_cast<shm::shared_memory *>(shmPtr);
+
                 consumer();
             }
         }
 
     private:
+        /// @brief Frees allocated shared memory
+        inline void free_shared_memory()
+        {
+            if (_sharedMemory)
+            {
+                _sharedMemory->~shared_memory();
+            }
+
+            bi::shared_memory_object::remove(_sharedName.data());
+        }
+
         /// @brief Producing data to shared memory
         inline void producer()
         {
@@ -74,10 +81,7 @@ namespace inter
                 return;
             }
 
-            if (inFile)
-            {
-                *_remainedSymbols = std::filesystem::file_size(_inFilepath);
-            }
+            _sharedMemory->remainedSymbols = std::filesystem::file_size(_inFilepath);
 
             readFromFile(inFile);
 
@@ -87,20 +91,21 @@ namespace inter
         /// @brief Reads data from file and saves to shared memory
         inline void readFromFile(std::ifstream &inFile)
         {
-            _status->startProducing = true;
+            _sharedMemory->status.startProducing = true;
 
             while (inFile)
             {
-                if (_buffer->readSize == 0)
+                if (_sharedMemory->buffer.readSize == 0)
                 {
-                    bi::scoped_lock lk(_mtx);
+                    bi::scoped_lock lk(_sharedMemory->mutex);
 
-                    inFile.read(_buffer->data, _buffer->bufferSize);
-                    _buffer->readSize = inFile.gcount();
+                    inFile.read(_sharedMemory->buffer.data, _sharedMemory->buffer.bufferSize);
+
+                    _sharedMemory->buffer.readSize = inFile.gcount();
                 }
             }
 
-            while (_status->endConsuming == false)
+            while (_sharedMemory->status.endConsuming == false)
             {
                 // Waiting for ending consumer process...
             }
@@ -118,7 +123,7 @@ namespace inter
                 return;
             }
 
-            while (_status->startProducing == false)
+            while (_sharedMemory->status.startProducing == false)
             {
                 // Waiting for staring producer process...
             }
@@ -131,20 +136,23 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            while (*_remainedSymbols > 0)
+            while (_sharedMemory->remainedSymbols > 0)
             {
-                if (_buffer->readSize > 0)
+                if (_sharedMemory->buffer.readSize > 0)
                 {
-                    bi::scoped_lock lk(_mtx);
+                    bi::scoped_lock lk(_sharedMemory->mutex);
 
-                    outFile.write(_buffer->data, _buffer->readSize);
+                    outFile.write(_sharedMemory->buffer.data,
+                                  _sharedMemory->buffer.readSize);
 
-                    *_remainedSymbols -= _buffer->readSize;
-                    _buffer->readSize = 0;
+                    _sharedMemory->remainedSymbols -=
+                        _sharedMemory->buffer.readSize;
+
+                    _sharedMemory->buffer.readSize = 0;
                 }
             }
 
-            _status->endConsuming = true;
+            _sharedMemory->status.endConsuming = true;
         }
 
     private:
@@ -152,14 +160,8 @@ namespace inter
         std::string_view _outFilepath;
         std::string_view _sharedName;
 
-        shm::shared_memory _sharedMemory;
-
-        status *_status{nullptr};
-        std::size_t *_remainedSymbols{nullptr};
-        buffer *_buffer{nullptr};
-
-        std::string_view _mutexName{"COPY_FILE_MUTEX"};
-        bi::named_mutex _mtx{bi::open_or_create, _mutexName.data()};
+        shm::shared_memory *_sharedMemory{nullptr};
+        bool _isProducer{false};
     };
 
 } // namespace inter
