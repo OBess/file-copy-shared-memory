@@ -88,6 +88,10 @@ int main(int argc, const char *argv[])
     {
         my::log::deflogger()->error("{}!", e.what());
     }
+    catch (...)
+    {
+        my::log::deflogger()->error("Unknown exception!");
+    }
 
     return EXIT_SUCCESS;
 }
