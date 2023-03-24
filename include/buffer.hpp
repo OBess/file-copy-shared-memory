@@ -10,7 +10,7 @@ namespace inter
     struct buffer
     {
         static constexpr std::size_t bufferSize =
-            std::hardware_destructive_interference_size * 100 - sizeof(std::size_t);
+            std::hardware_destructive_interference_size * 1000 - sizeof(std::size_t);
 
         char data[bufferSize]{};
         std::size_t readSize{};
