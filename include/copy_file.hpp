@@ -85,6 +85,8 @@ namespace inter
 
             readFromFile(inFile);
 
+            _sharedMemory->status.endProducing = true;
+
             while (_sharedMemory->status.endConsuming == false)
             {
                 // Waiting for ending consumer process...
@@ -127,11 +129,7 @@ namespace inter
                 // Waiting for staring producer process...
             }
 
-            if (std::size_t fileSize{std::filesystem::file_size(_inFilepath)};
-                fileSize > 0)
-            {
-                writeToFile(outFile);
-            }
+            writeToFile(outFile);
 
             _sharedMemory->status.endConsuming = true;
 
@@ -141,8 +139,7 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            bool write{true};
-            while (write)
+            auto writeFromBuffer = [&](bool &write)
             {
                 for (auto &curBuf : _sharedMemory->buffer)
                 {
@@ -160,7 +157,20 @@ namespace inter
 
                     curBuf.readSize = 0;
                 }
+            };
+
+            bool write{true};
+            while (write)
+            {
+                writeFromBuffer(write);
+
+                if (_sharedMemory->status.endProducing)
+                {
+                    write = false;
+                }
             }
+
+            writeFromBuffer(write);
         }
 
     private:

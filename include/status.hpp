@@ -8,6 +8,7 @@ namespace inter
     struct status
     {
         bool startProducing{false};
+        bool endProducing{false};
         bool endConsuming{false};
     };
 
