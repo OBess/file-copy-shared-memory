@@ -139,7 +139,7 @@ namespace inter
         /// @brief Reads data from shared memory and saves to file
         inline void writeToFile(std::ofstream &outFile)
         {
-            auto writeFromBuffer = [&](bool &write)
+            auto writeFromBuffer = [&]()
             {
                 for (auto &curBuf : _sharedMemory->buffer)
                 {
@@ -150,11 +150,6 @@ namespace inter
 
                     outFile.write(curBuf.data, curBuf.readSize);
 
-                    if (curBuf.readSize < buffer::bufferSize)
-                    {
-                        write = false;
-                    }
-
                     curBuf.readSize = 0;
                 }
             };
@@ -162,7 +157,7 @@ namespace inter
             bool write{true};
             while (write)
             {
-                writeFromBuffer(write);
+                writeFromBuffer();
 
                 if (_sharedMemory->status.endProducing)
                 {
@@ -170,7 +165,7 @@ namespace inter
                 }
             }
 
-            writeFromBuffer(write);
+            writeFromBuffer();
         }
 
     private:
