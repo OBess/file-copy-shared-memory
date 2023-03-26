@@ -2,11 +2,8 @@
 #ifndef __INCLUDE_SHARED_MEMORY_HPP__
 #define __INCLUDE_SHARED_MEMORY_HPP__
 
-#include <mutex>
-
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include "buffer.hpp"
 #include "status.hpp"
