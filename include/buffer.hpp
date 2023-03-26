@@ -2,7 +2,7 @@
 #ifndef __INCLUDE_BUFFER_HPP__
 #define __INCLUDE_BUFFER_HPP__
 
-#include <thread>
+#include <new>
 
 namespace inter
 {
