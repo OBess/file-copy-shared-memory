@@ -3,13 +3,8 @@
 #define __INCLUDE_COPY_FILE_HPP__
 
 #include <fstream>
-#include <iostream>
 
-#include <boost/interprocess/shared_memory_object.hpp>
-
-#include "buffer.hpp"
 #include "logger.hpp"
-#include "status.hpp"
 #include "shared_memory.hpp"
 
 namespace inter
