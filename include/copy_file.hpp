@@ -2,6 +2,7 @@
 #ifndef __INCLUDE_COPY_FILE_HPP__
 #define __INCLUDE_COPY_FILE_HPP__
 
+#include <csignal>
 #include <fstream>
 
 #include "exception.hpp"
@@ -11,6 +12,26 @@
 namespace inter
 {
     namespace bi = boost::interprocess;
+
+    namespace detail
+    {
+        /// @brief Static termination data
+        static struct
+        {
+            std::string name;
+            bool isProducer{false};
+        } termination_struct;
+
+        /// @brief Function to handle termination
+        static void termination(int signal)
+        {
+            my::log::deflogger()->info("Thermination call!!!");
+            if (termination_struct.isProducer)
+            {
+                bi::shared_memory_object::remove(termination_struct.name.c_str());
+            }
+        }
+    } // namespace detail
 
     class copy_file
     {
@@ -50,6 +71,11 @@ namespace inter
             _isProducer = shm::exists(_sharedName) == false;
 
             uint8_t *shmPtr = shm::getShareMemory(_sharedName, _isProducer);
+
+            // Sets termination params
+            detail::termination_struct.isProducer = _isProducer;
+            detail::termination_struct.name = _sharedName;
+            std::signal(SIGTERM, detail::termination);
 
             if (_isProducer)
             {
