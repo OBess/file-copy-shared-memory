@@ -12,6 +12,27 @@ namespace inter
 {
     namespace bi = boost::interprocess;
 
+    namespace detail
+    {
+        /// @brief Static termination data
+        static struct
+        {
+            shm::shared_memory **smnPtr{nullptr};
+            std::string_view *name{nullptr};
+        } termination_struct;
+
+        /// @brief Function to handle termination
+        static void termination()
+        {
+            (*termination_struct.smnPtr)->status.endConsuming = true;
+            (*termination_struct.smnPtr)->status.endProducing = true;
+
+            bi::shared_memory_object::remove(termination_struct.name->data());
+
+            std::abort();
+        }
+    } // namespace detail
+
     class copy_file
     {
     public:
@@ -21,11 +42,13 @@ namespace inter
               _sharedName{shared_name}
         {
             my::log::deflogger()->info("The copy_file constructed!");
+            my::log::deflogger()->flush();
         }
 
         ~copy_file()
         {
             my::log::deflogger()->info("The copy_file destructed!");
+            my::log::deflogger()->flush();
             if (_isProducer)
             {
                 my::log::producer_logger()->info("The copy_file destructed!");
@@ -46,6 +69,11 @@ namespace inter
         ///        data form-to file throught shared memory
         inline void run()
         {
+            // Sets termination params
+            detail::termination_struct.smnPtr = &_sharedMemory;
+            detail::termination_struct.name = &_sharedName;
+            std::set_terminate(detail::termination);
+
             // Checks if current process can be producer
             _isProducer = shm::exists(_sharedName) == false;
 
@@ -121,6 +149,8 @@ namespace inter
                         inFile.read(curBuf.data, curBuf.bufferSize);
 
                         curBuf.readSize = inFile.gcount();
+
+                        throw shm::exception("Error with read from file"); // Error to test
                     }
                 }
             }
@@ -165,6 +195,8 @@ namespace inter
                     outFile.write(curBuf.data, curBuf.readSize);
 
                     curBuf.readSize = 0;
+
+                    // throw shm::exception("Error with write to file"); // Error to test
                 }
             };
 

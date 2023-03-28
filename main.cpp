@@ -79,6 +79,8 @@ int main(int argc, const char *argv[])
         return EXIT_FAILURE;
     }
 
+// To test the termination function set to 0
+#if 0
     try
     {
         inter::copy_file Instance(in_filepath, out_filepath, name);
@@ -92,6 +94,10 @@ int main(int argc, const char *argv[])
     {
         my::log::deflogger()->error("Unknown exception!");
     }
+#else
+    inter::copy_file Instance(in_filepath, out_filepath, name);
+    Instance.run();
+#endif
 
     return EXIT_SUCCESS;
 }
