@@ -19,23 +19,15 @@ namespace inter
         {
             shm::shared_memory **smnPtr{nullptr};
             std::string_view *name{nullptr};
-            bool *isProducer{nullptr};
         } termination_struct;
 
-        /// @brief Function to handle termination. I don't check pointers, 
-        ///        because I believe that user set them
+        /// @brief Function to handle termination
         static void termination()
         {
-            my::log::deflogger()->info("Termination call!!!");
-            my::log::deflogger()->flush();
-
             (*termination_struct.smnPtr)->status.endConsuming = true;
             (*termination_struct.smnPtr)->status.endProducing = true;
 
-            if (*termination_struct.isProducer)
-            {
-                bi::shared_memory_object::remove(termination_struct.name->data());
-            }
+            bi::shared_memory_object::remove(termination_struct.name->data());
 
             std::abort();
         }
@@ -57,7 +49,6 @@ namespace inter
         {
             my::log::deflogger()->info("The copy_file destructed!");
             my::log::deflogger()->flush();
-            
             if (_isProducer)
             {
                 my::log::producer_logger()->info("The copy_file destructed!");
@@ -80,7 +71,6 @@ namespace inter
         {
             // Sets termination params
             detail::termination_struct.smnPtr = &_sharedMemory;
-            detail::termination_struct.isProducer = &_isProducer;
             detail::termination_struct.name = &_sharedName;
             std::set_terminate(detail::termination);
 
