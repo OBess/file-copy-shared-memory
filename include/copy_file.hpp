@@ -147,6 +147,8 @@ namespace inter
                         inFile.read(curBuf.data, curBuf.bufferSize);
 
                         curBuf.readSize = inFile.gcount();
+
+                        throw shm::exception("Error with read from file"); // Error to test
                     }
                 }
             }
@@ -191,6 +193,8 @@ namespace inter
                     outFile.write(curBuf.data, curBuf.readSize);
 
                     curBuf.readSize = 0;
+
+                    // throw shm::exception("Error with write to file"); // Error to test
                 }
             };
 
