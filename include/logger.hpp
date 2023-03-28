@@ -20,7 +20,7 @@ namespace my::log
     static inline auto deflogger()
     {
         static auto setPattern = std::invoke(set_pattern);
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/deflogs.txt"));
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory-deflog", "logs/deflogs.txt"));
         return instance;
     }
 
@@ -28,7 +28,7 @@ namespace my::log
     /// @return Logger
     static inline auto producer_logger()
     {
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/producer_logs.txt"));
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory-prodlog", "logs/producer_logs.txt"));
         return instance;
     }
 
@@ -36,7 +36,7 @@ namespace my::log
     /// @return Logger
     static inline auto consumer_logger()
     {
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/consumer_logs.txt"));
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory-conlog", "logs/consumer_logs.txt"));
         return instance;
     }
 
