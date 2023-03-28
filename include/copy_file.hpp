@@ -2,7 +2,6 @@
 #ifndef __INCLUDE_COPY_FILE_HPP__
 #define __INCLUDE_COPY_FILE_HPP__
 
-#include <csignal>
 #include <fstream>
 
 #include "exception.hpp"
@@ -18,18 +17,27 @@ namespace inter
         /// @brief Static termination data
         static struct
         {
-            std::string name;
-            bool isProducer{false};
+            shm::shared_memory **smnPtr{nullptr};
+            std::string_view *name{nullptr};
+            bool *isProducer{nullptr};
         } termination_struct;
 
-        /// @brief Function to handle termination
-        static void termination(int signal)
+        /// @brief Function to handle termination. I don't check pointers, 
+        ///        because I believe that user set them
+        static void termination()
         {
-            my::log::deflogger()->info("Thermination call!!!");
-            if (termination_struct.isProducer)
+            my::log::deflogger()->info("Termination call!!!");
+            my::log::deflogger()->flush();
+
+            (*termination_struct.smnPtr)->status.endConsuming = true;
+            (*termination_struct.smnPtr)->status.endProducing = true;
+
+            if (*termination_struct.isProducer)
             {
-                bi::shared_memory_object::remove(termination_struct.name.c_str());
+                bi::shared_memory_object::remove(termination_struct.name->data());
             }
+
+            std::abort();
         }
     } // namespace detail
 
@@ -42,11 +50,14 @@ namespace inter
               _sharedName{shared_name}
         {
             my::log::deflogger()->info("The copy_file constructed!");
+            my::log::deflogger()->flush();
         }
 
         ~copy_file()
         {
             my::log::deflogger()->info("The copy_file destructed!");
+            my::log::deflogger()->flush();
+            
             if (_isProducer)
             {
                 my::log::producer_logger()->info("The copy_file destructed!");
@@ -67,15 +78,16 @@ namespace inter
         ///        data form-to file throught shared memory
         inline void run()
         {
+            // Sets termination params
+            detail::termination_struct.smnPtr = &_sharedMemory;
+            detail::termination_struct.isProducer = &_isProducer;
+            detail::termination_struct.name = &_sharedName;
+            std::set_terminate(detail::termination);
+
             // Checks if current process can be producer
             _isProducer = shm::exists(_sharedName) == false;
 
             uint8_t *shmPtr = shm::getShareMemory(_sharedName, _isProducer);
-
-            // Sets termination params
-            detail::termination_struct.isProducer = _isProducer;
-            detail::termination_struct.name = _sharedName;
-            std::signal(SIGTERM, detail::termination);
 
             if (_isProducer)
             {
