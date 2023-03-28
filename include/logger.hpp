@@ -2,15 +2,25 @@
 #ifndef __INCLUDE_LOGGER_HPP__
 #define __INCLUDE_LOGGER_HPP__
 
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace my::log
 {
+    /// @brief Sets the pattern to loggers
+    /// @return For IIFE idiom
+    static inline uint8_t set_pattern()
+    {
+        spdlog::set_pattern("[%Y-%M-%d %H:%M:%S] [pid %P] %v");
+        return 0;
+    }
+
     /// @brief Creates the instance of default logger to log to default logs
     /// @return Logger
     static inline auto deflogger()
     {
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/deflogs.txt"));
+        static auto setPattern = std::invoke(set_pattern);
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory-deflog", "logs/deflogs.txt"));
         return instance;
     }
 
@@ -18,7 +28,7 @@ namespace my::log
     /// @return Logger
     static inline auto producer_logger()
     {
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/producer_logs.txt"));
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory-prodlog", "logs/producer_logs.txt"));
         return instance;
     }
 
@@ -26,7 +36,7 @@ namespace my::log
     /// @return Logger
     static inline auto consumer_logger()
     {
-        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory", "logs/consumer_logs.txt"));
+        static auto instance(spdlog::basic_logger_mt("file-copy-shared-memory-conlog", "logs/consumer_logs.txt"));
         return instance;
     }
 

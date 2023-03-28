@@ -4,6 +4,7 @@
 
 #include <fstream>
 
+#include "exception.hpp"
 #include "logger.hpp"
 #include "shared_memory.hpp"
 
@@ -19,13 +20,25 @@ namespace inter
             : _inFilepath{in_filepath}, _outFilepath{out_filepath},
               _sharedName{shared_name}
         {
+            my::log::deflogger()->info("The copy_file constructed!");
         }
 
         ~copy_file()
         {
+            my::log::deflogger()->info("The copy_file destructed!");
             if (_isProducer)
             {
+                my::log::producer_logger()->info("The copy_file destructed!");
+
+                _sharedMemory->status.endProducing = true;
+
                 free_shared_memory();
+            }
+            else
+            {
+                my::log::consumer_logger()->info("The copy_file destructed!");
+
+                _sharedMemory->status.endConsuming = true;
             }
         }
 
@@ -71,7 +84,7 @@ namespace inter
 
             if (!inFile)
             {
-                my::log::producer_logger()->error("[Producer] Cannot run copping"
+                my::log::producer_logger()->error("Cannot run copping"
                                                   " because input filepath is invalid!");
                 return;
             }
@@ -87,7 +100,7 @@ namespace inter
                 // Waiting for ending consumer process...
             }
 
-            my::log::producer_logger()->info("[Producer] Producing done!");
+            my::log::producer_logger()->info("Producing done!");
         }
 
         /// @brief Reads data from file and saves to shared memory
@@ -97,6 +110,12 @@ namespace inter
             {
                 for (auto &curBuf : _sharedMemory->buffer)
                 {
+                    if (_sharedMemory->status.endConsuming)
+                    {
+                        my::log::producer_logger()->warn("Maybe some error!");
+                        return;
+                    }
+
                     if (curBuf.readSize == 0)
                     {
                         inFile.read(curBuf.data, curBuf.bufferSize);
@@ -114,7 +133,7 @@ namespace inter
 
             if (!outFile)
             {
-                my::log::consumer_logger()->error("[Consumer] Cannot run copping"
+                my::log::consumer_logger()->error("Cannot run copping"
                                                   " because output filepath is invalid!");
                 return;
             }
@@ -128,7 +147,7 @@ namespace inter
 
             _sharedMemory->status.endConsuming = true;
 
-            my::log::consumer_logger()->info("[Consumer] Consuming done!");
+            my::log::consumer_logger()->info("Consuming done!");
         }
 
         /// @brief Reads data from shared memory and saves to file
