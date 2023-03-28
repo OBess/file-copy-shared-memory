@@ -19,10 +19,12 @@ namespace inter
             : _inFilepath{in_filepath}, _outFilepath{out_filepath},
               _sharedName{shared_name}
         {
+            my::log::deflogger()->info("The copy_file constructed!");
         }
 
         ~copy_file()
         {
+            my::log::deflogger()->info("The copy_file destructed!");
             if (_isProducer)
             {
                 free_shared_memory();
